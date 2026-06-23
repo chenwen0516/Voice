@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+server.*.log
+tts-test*.wav
+samples/*.wav
+samples/*.json
+samples/*.csv
+samples/**/*.wav
+samples/**/*.json
+samples/**/*.csv

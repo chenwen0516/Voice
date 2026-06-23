@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Voice Service</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Local Voice Service</h1>
+        <p id="status">Checking service...</p>
+      </div>
+      <a class="icon-link" href="/docs" title="Open API docs">API</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>ASR</h2>
+          <span class="badge">audio to text</span>
+        </div>
+
+        <div class="grid">
+          <label>
+            Backend
+            <select id="asrBackend">
+              <option value="whisper">Whisper</option>
+              <option value="funasr">SenseVoice / FunASR</option>
+            </select>
+          </label>
+          <label>
+            Model
+            <input id="asrModel" value="small" />
+          </label>
+          <label>
+            Device
+            <select id="asrDevice">
+              <option value="cpu">CPU</option>
+              <option value="auto">Auto</option>
+              <option value="cuda">CUDA</option>
+            </select>
+          </label>
+          <label>
+            Compute
+            <select id="asrCompute">
+              <option value="int8">int8</option>
+              <option value="int8_float16">int8_float16</option>
+              <option value="float16">float16</option>
+            </select>
+          </label>
+        </div>
+
+        <input id="audioFile" class="file" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac" />
+        <button id="transcribeBtn" class="primary">Transcribe</button>
+        <pre id="asrResult" class="result"></pre>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>TTS</h2>
+          <span class="badge">text to audio</span>
+        </div>
+
+        <label>
+          Text
+          <textarea id="ttsText">你好，这是本地语音合成测试。</textarea>
+        </label>
+
+        <div class="grid">
+          <label>
+            Engine
+            <select id="ttsEngine">
+              <option value="sapi">Windows SAPI</option>
+              <option value="piper">Piper</option>
+            </select>
+          </label>
+          <label>
+            Rate
+            <input id="ttsRate" type="number" value="0" min="-10" max="10" />
+          </label>
+          <label>
+            Volume
+            <input id="ttsVolume" type="number" value="100" min="0" max="100" />
+          </label>
+        </div>
+
+        <button id="speakBtn" class="primary">Synthesize</button>
+        <audio id="ttsAudio" controls></audio>
+        <a id="downloadLink" class="download" download="speech.wav">Download WAV</a>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
