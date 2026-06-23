@@ -21,6 +21,12 @@ Optional SenseVoice/FunASR backend:
 
 On Windows, Python 3.11 is recommended for FunASR. With Python 3.13, `editdistance` may require Microsoft C++ Build Tools.
 
+Optional dataset tooling:
+
+```powershell
+.\scripts\setup_datasets.ps1
+```
+
 ## Run
 
 ```powershell
@@ -82,6 +88,12 @@ External dataset manifest:
 ```
 
 Dataset notes are in `docs/datasets.md`.
+
+Small dataset export:
+
+```powershell
+.\scripts\download_small_dataset.ps1 --dataset minds14-zh --limit 100 --max-mb 100
+```
 
 ## CUDA Check
 

@@ -80,6 +80,25 @@ def normalize_text(text: str) -> str:
         "鍊": "链",
         "鏈": "链",
         "煉": "链",
+        "帳": "账",
+        "戶": "户",
+        "餘": "余",
+        "設": "设",
+        "聯": "联",
+        "嗎": "吗",
+        "問": "问",
+        "裡": "里",
+        "靈": "灵",
+        "顯": "显",
+        "開": "开",
+        "幫": "帮",
+        "還": "还",
+        "夠": "够",
+        "麼": "么",
+        "對": "对",
+        "銀": "银",
+        "辦": "办",
+        "查詢": "查询",
     }
     for source, target in replacements.items():
         text = text.replace(source, target)
@@ -116,4 +135,3 @@ def character_error_rate(expected: str, actual: str) -> tuple[float, int, int]:
     distance = edit_distance(normalized_expected, normalized_actual)
     expected_chars = max(1, len(normalized_expected))
     return distance / expected_chars, distance, expected_chars
-
