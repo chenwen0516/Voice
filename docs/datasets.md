@@ -4,6 +4,7 @@ These are practical public datasets for the next round of ASR comparison.
 
 | Dataset | Language / style | Why use it | Notes |
 | --- | --- | --- | --- |
+| PolyAI MInDS-14 zh-CN | Mandarin task-oriented user speech | Very small first real-speech benchmark | 100 WAV samples used about 5.92MB here |
 | AISHELL-1 | Mandarin, read speech | Clean baseline for Mandarin ASR accuracy | Large download; good first offline benchmark once cached |
 | Mozilla Common Voice Chinese | Crowd-sourced Mandarin and accents | Better coverage of speakers and recording conditions | Versions change over time; use a pinned release |
 | WenetSpeech | Large-scale Mandarin speech | Good stress test for real-world Mandarin | Much larger than AISHELL-1; use a small manifest subset first |
@@ -49,14 +50,21 @@ Run Whisper on the exported set:
   --compute-type int8
 ```
 
+Run SenseVoice/FunASR on the same set:
+
+```powershell
+.\scripts\benchmark_sensevoice_minds14.ps1
+```
+
 Current 100-sample results on this machine:
 
 | Backend | Model | Device | Exact rate | Average CER | Median CER | Avg ASR time |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Whisper | `tiny` | CPU int8 | 8% | 42.95% | 28.17% | 0.59s |
 | Whisper | `small` | CPU int8 | 26% | 26.45% | 14.09% | 2.21s |
+| SenseVoice / FunASR | `FunAudioLLM/SenseVoiceSmall` | CPU | 46% | 13.71% | 3.64% | 0.58s |
 
-These numbers are much worse than the synthetic TTS benchmark because MInDS-14 contains real user speech, noisy/short clips, mixed Chinese/English samples, and some loose transcripts. It is useful as a practical smoke benchmark, not as a perfectly clean Mandarin leaderboard.
+SenseVoice had the best accuracy in this small local run. Some high-CER rows appear to have loose or truncated reference transcripts, so this is a practical smoke benchmark rather than a clean leaderboard.
 
 `scripts/benchmark_manifest.py` accepts a CSV or JSONL manifest with these columns:
 
@@ -79,13 +87,13 @@ Example:
   --compute-type int8
 ```
 
-For SenseVoice/FunASR:
+For SenseVoice/FunASR with Python 3.11:
 
 ```powershell
-.\scripts\setup_funasr.ps1
-.\.venv\Scripts\python .\scripts\benchmark_manifest.py `
+.\scripts\setup_funasr_py311.ps1
+.\.venv311\Scripts\python .\scripts\benchmark_manifest.py `
   --manifest .\samples\dataset.csv `
   --backend funasr `
-  --model-size iic/SenseVoiceSmall `
+  --model-size FunAudioLLM/SenseVoiceSmall `
   --device cpu
 ```

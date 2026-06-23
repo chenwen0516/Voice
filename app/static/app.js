@@ -4,12 +4,30 @@ const speakBtn = document.querySelector("#speakBtn");
 const asrResult = document.querySelector("#asrResult");
 const audio = document.querySelector("#ttsAudio");
 const downloadLink = document.querySelector("#downloadLink");
+const asrBackend = document.querySelector("#asrBackend");
+const asrModel = document.querySelector("#asrModel");
+const asrCompute = document.querySelector("#asrCompute");
+const asrDevice = document.querySelector("#asrDevice");
 
 async function loadHealth() {
   const response = await fetch("/health");
   const health = await response.json();
   statusEl.textContent = `ASR ${health.asr_default_backend}/${health.asr_default_model} on ${health.asr_default_device}. CUDA runtime: ${health.cuda_runtime_available ? "ready" : "missing"}.`;
+  asrBackend.value = health.asr_default_backend;
+  asrModel.value = health.asr_default_model;
+  asrDevice.value = health.asr_default_device;
+  asrBackend.dispatchEvent(new Event("change"));
 }
+
+asrBackend.addEventListener("change", () => {
+  if (asrBackend.value === "funasr" && asrModel.value === "small") {
+    asrModel.value = "FunAudioLLM/SenseVoiceSmall";
+  }
+  if (asrBackend.value === "whisper" && asrModel.value === "FunAudioLLM/SenseVoiceSmall") {
+    asrModel.value = "small";
+  }
+  asrCompute.disabled = asrBackend.value === "funasr";
+});
 
 transcribeBtn.addEventListener("click", async () => {
   const file = document.querySelector("#audioFile").files[0];
@@ -22,10 +40,10 @@ transcribeBtn.addEventListener("click", async () => {
   asrResult.textContent = "Transcribing...";
 
   const params = new URLSearchParams({
-    backend: document.querySelector("#asrBackend").value,
-    model_size: document.querySelector("#asrModel").value,
-    device: document.querySelector("#asrDevice").value,
-    compute_type: document.querySelector("#asrCompute").value,
+    backend: asrBackend.value,
+    model_size: asrModel.value,
+    device: asrDevice.value,
+    compute_type: asrCompute.value,
     language: "zh",
   });
   const form = new FormData();
@@ -85,3 +103,4 @@ loadHealth().catch(() => {
   statusEl.textContent = "Service health check failed.";
 });
 
+asrBackend.dispatchEvent(new Event("change"));

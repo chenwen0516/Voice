@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
+
+DEFAULT_FUNASR_MODEL = "FunAudioLLM/SenseVoiceSmall"
 
 
 class Segment(BaseModel):
@@ -67,6 +70,26 @@ def os_environ_path() -> list[str]:
     return [path for path in os.getenv("PATH", "").split(";") if path]
 
 
+def _prepend_path(directory: Path) -> None:
+    import os
+
+    directory_text = str(directory)
+    paths = os_environ_path()
+    if directory.exists() and directory_text not in paths:
+        os.environ["PATH"] = directory_text + ";" + os.getenv("PATH", "")
+
+
+def _ensure_runtime_paths() -> None:
+    _prepend_path(Path(sys.executable).resolve().parent)
+
+    local_app_data = Path.home() / "AppData" / "Local"
+    package_root = local_app_data / "Microsoft" / "WinGet" / "Packages"
+    if package_root.exists() and not shutil.which("ffmpeg"):
+        for ffmpeg in package_root.rglob("ffmpeg.exe"):
+            _prepend_path(ffmpeg.parent)
+            break
+
+
 def has_cuda_runtime() -> bool:
     return bool(_find_runtime_dll("cublas64_12.dll"))
 
@@ -124,32 +147,55 @@ def _run_transcription(
 
 @lru_cache(maxsize=2)
 def _load_funasr_model(model_name: str, device: str):
+    _ensure_runtime_paths()
     try:
         from funasr import AutoModel
     except ImportError as exc:
         raise RuntimeError(
-            "FunASR is not installed. Run .\\scripts\\setup_funasr.ps1 first."
+            "FunASR is not installed. Run .\\scripts\\setup_funasr_py311.ps1 first."
         ) from exc
+
+    if model_name.startswith("FunAudioLLM/"):
+        try:
+            from huggingface_hub import snapshot_download
+        except ImportError as exc:
+            raise RuntimeError("huggingface_hub is required for FunAudioLLM models.") from exc
+        model_name = snapshot_download(model_name)
 
     resolved_device = _resolve_device(device)
     funasr_device = "cuda:0" if resolved_device == "cuda" else "cpu"
-    return AutoModel(
-        model=model_name,
-        trust_remote_code=True,
-        vad_model="fsmn-vad",
-        vad_kwargs={"max_single_segment_time": 30000},
-        device=funasr_device,
-    )
+    kwargs = {
+        "model": model_name,
+        "trust_remote_code": True,
+        "disable_update": True,
+        "device": funasr_device,
+    }
+    if not Path(model_name).exists():
+        kwargs["vad_model"] = "fsmn-vad"
+        kwargs["vad_kwargs"] = {"max_single_segment_time": 30000}
+    return AutoModel(**kwargs)
+
+
+def _resolve_funasr_model_name(model_size: str) -> str:
+    if not model_size or model_size.lower() in {"small", "sensevoicesmall"}:
+        return DEFAULT_FUNASR_MODEL
+    return model_size
 
 
 def _extract_funasr_text(result: Any) -> str:
     if isinstance(result, list) and result:
         first = result[0]
         if isinstance(first, dict):
-            return str(first.get("text", "")).strip()
+            return _clean_funasr_text(str(first.get("text", "")))
     if isinstance(result, dict):
-        return str(result.get("text", "")).strip()
-    return str(result).strip()
+        return _clean_funasr_text(str(result.get("text", "")))
+    return _clean_funasr_text(str(result))
+
+
+def _clean_funasr_text(text: str) -> str:
+    import re
+
+    return re.sub(r"<\|[^|]+?\|>", "", text).strip()
 
 
 def _transcribe_with_funasr(
@@ -159,7 +205,7 @@ def _transcribe_with_funasr(
     device: str,
     language: str | None,
 ) -> TranscriptionResult:
-    model_name = model_size if model_size else "iic/SenseVoiceSmall"
+    model_name = _resolve_funasr_model_name(model_size)
     model = _load_funasr_model(model_name, device)
     resolved_device = _resolve_device(device)
     result = model.generate(
@@ -198,7 +244,7 @@ def transcribe_audio(
     if selected_backend in {"funasr", "sensevoice"}:
         return _transcribe_with_funasr(
             audio_path,
-            model_size=model_size or "iic/SenseVoiceSmall",
+            model_size=model_size,
             device=device,
             language=language,
         )

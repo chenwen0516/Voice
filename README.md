@@ -16,10 +16,12 @@ Windows local ASR + TTS test service.
 Optional SenseVoice/FunASR backend:
 
 ```powershell
-.\scripts\setup_funasr.ps1
+winget install --id Python.Python.3.11 -e
+winget install --id Gyan.FFmpeg -e
+.\scripts\setup_funasr_py311.ps1
 ```
 
-On Windows, Python 3.11 is recommended for FunASR. With Python 3.13, `editdistance` may require Microsoft C++ Build Tools.
+On Windows, Python 3.11 is recommended for FunASR/SenseVoice. This project keeps it in `.venv311` because the main `.venv` may be Python 3.13.
 
 Optional dataset tooling:
 
@@ -31,6 +33,12 @@ Optional dataset tooling:
 
 ```powershell
 .\scripts\run.ps1
+```
+
+Run the web service with SenseVoice/FunASR enabled:
+
+```powershell
+.\scripts\run_funasr_py311.ps1
 ```
 
 Open:
@@ -57,7 +65,7 @@ curl.exe -X POST "http://127.0.0.1:8000/asr?backend=whisper&model_size=small&dev
 SenseVoice/FunASR:
 
 ```powershell
-curl.exe -X POST "http://127.0.0.1:8000/asr?backend=funasr&model_size=iic/SenseVoiceSmall&device=cpu&language=auto" `
+curl.exe -X POST "http://127.0.0.1:8000/asr?backend=funasr&model_size=FunAudioLLM/SenseVoiceSmall&device=cpu&language=auto" `
   -F "file=@C:\path\to\audio.wav"
 ```
 
@@ -87,13 +95,19 @@ External dataset manifest:
 .\.venv\Scripts\python .\scripts\benchmark_manifest.py --manifest .\samples\dataset.csv --backend whisper --model-size small --device cpu --compute-type int8
 ```
 
-Dataset notes are in `docs/datasets.md`.
-
 Small dataset export:
 
 ```powershell
 .\scripts\download_small_dataset.ps1 --dataset minds14-zh --limit 100 --max-mb 100
 ```
+
+SenseVoice on the small MInDS-14 zh-CN sample:
+
+```powershell
+.\scripts\benchmark_sensevoice_minds14.ps1
+```
+
+Dataset notes and current comparison numbers are in `docs/datasets.md`.
 
 ## CUDA Check
 
