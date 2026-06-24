@@ -49,6 +49,10 @@ def parse_bool(value: str) -> bool:
     raise argparse.ArgumentTypeError(f"Expected a boolean value, got: {value}")
 
 
+def safe_console(value: str) -> str:
+    return value.encode("gbk", errors="replace").decode("gbk")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
@@ -175,7 +179,7 @@ def main() -> None:
         writer.writerows(output_rows)
     json_path.write_text(json.dumps(output_rows, ensure_ascii=False, indent=2), encoding="utf-8")
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
+    print(safe_console(json.dumps(summary, ensure_ascii=False, indent=2)), flush=True)
 
 
 if __name__ == "__main__":

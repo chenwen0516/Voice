@@ -101,10 +101,22 @@ Small dataset export:
 .\scripts\download_small_dataset.ps1 --dataset minds14-zh --limit 100 --max-mb 100
 ```
 
+FLEURS zh-CN export:
+
+```powershell
+.\scripts\download_small_dataset.ps1 --dataset fleurs-zh --limit 100 --max-mb 100
+```
+
 SenseVoice on the small MInDS-14 zh-CN sample:
 
 ```powershell
 .\scripts\benchmark_sensevoice_minds14.ps1
+```
+
+SenseVoice on the FLEURS zh-CN sample:
+
+```powershell
+.\scripts\benchmark_sensevoice_fleurs.ps1
 ```
 
 SenseVoice parameter sweep:

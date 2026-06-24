@@ -5,6 +5,7 @@ These are practical public datasets for the next round of ASR comparison.
 | Dataset | Language / style | Why use it | Notes |
 | --- | --- | --- | --- |
 | PolyAI MInDS-14 zh-CN | Mandarin task-oriented user speech | Very small first real-speech benchmark | 100 WAV samples used about 5.92MB here |
+| Google FLEURS cmn_hans_cn | Mandarin read speech | Cleaner multilingual ASR baseline | 100 WAV samples used about 67.44MB here |
 | AISHELL-1 | Mandarin, read speech | Clean baseline for Mandarin ASR accuracy | Large download; good first offline benchmark once cached |
 | Mozilla Common Voice Chinese | Crowd-sourced Mandarin and accents | Better coverage of speakers and recording conditions | Versions change over time; use a pinned release |
 | WenetSpeech | Large-scale Mandarin speech | Good stress test for real-world Mandarin | Much larger than AISHELL-1; use a small manifest subset first |
@@ -12,9 +13,10 @@ These are practical public datasets for the next round of ASR comparison.
 Recommended order:
 
 1. Use `PolyAI/minds14` zh-CN for a small first benchmark.
-2. Use AISHELL-1 test split for a clean Mandarin baseline.
-3. Use a small Common Voice zh-CN sample for speaker/accent diversity.
-4. Use WenetSpeech only after the benchmark flow is stable, because the dataset is much bigger.
+2. Use `google/fleurs` `cmn_hans_cn` for a cleaner Mandarin read-speech benchmark.
+3. Use AISHELL-1 test split for a clean Mandarin baseline.
+4. Use a small Common Voice zh-CN sample for speaker/accent diversity.
+5. Use WenetSpeech only after the benchmark flow is stable, because the dataset is much bigger.
 
 ## Small Dataset: MInDS-14 zh-CN
 
@@ -85,6 +87,37 @@ Current 100-sample SenseVoice parameter sweep:
 | `zh-noitn-vad15` | 47% | 49% | 53% | 14.08% | 13.51% | 9.18% |
 
 Recommendation from this run: keep Chinese language fixed (`zh`) and keep ITN enabled. `vad30` is the default because it matched the best CER group and was slightly faster in this local run.
+
+## Small Dataset: FLEURS zh-CN
+
+Download/export about 100 Mandarin FLEURS samples, capped near 100MB:
+
+```powershell
+.\scripts\download_small_dataset.ps1 --dataset fleurs-zh --limit 100 --max-mb 100
+```
+
+This creates:
+
+```text
+samples\datasets\fleurs-zh\manifest.csv
+samples\datasets\fleurs-zh\audio\*.wav
+```
+
+On this machine, 100 exported FLEURS `cmn_hans_cn` WAV files used about 67.44MB.
+
+Run SenseVoice/FunASR on the exported set:
+
+```powershell
+.\scripts\benchmark_sensevoice_fleurs.ps1
+```
+
+Current 100-sample FLEURS result on this machine:
+
+| Backend | Model | Device | Exact rate | Average CER | Median CER | Avg ASR time |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| SenseVoice / FunASR | `FunAudioLLM/SenseVoiceSmall` | CPU | 43% | 5.96% | 3.28% | 0.70s |
+
+FLEURS is cleaner than MInDS-14 for Mandarin read speech, so it gives a better general ASR baseline. Some high-CER rows still come from embedded Latin names or acronyms in the reference text, such as English organization names in parentheses.
 
 `scripts/benchmark_manifest.py` accepts a CSV or JSONL manifest with these columns:
 
