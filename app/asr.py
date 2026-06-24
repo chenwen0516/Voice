@@ -204,6 +204,9 @@ def _transcribe_with_funasr(
     model_size: str,
     device: str,
     language: str | None,
+    use_itn: bool = True,
+    merge_vad: bool = True,
+    merge_length_s: int = 30,
 ) -> TranscriptionResult:
     model_name = _resolve_funasr_model_name(model_size)
     model = _load_funasr_model(model_name, device)
@@ -212,10 +215,10 @@ def _transcribe_with_funasr(
         input=str(audio_path),
         cache={},
         language=language or "auto",
-        use_itn=True,
+        use_itn=use_itn,
         batch_size_s=60,
-        merge_vad=True,
-        merge_length_s=15,
+        merge_vad=merge_vad,
+        merge_length_s=merge_length_s,
     )
     text = _extract_funasr_text(result)
     return TranscriptionResult(
@@ -239,6 +242,9 @@ def transcribe_audio(
     compute_type: str,
     language: str | None,
     beam_size: int,
+    funasr_use_itn: bool = True,
+    funasr_merge_vad: bool = True,
+    funasr_merge_length_s: int = 30,
 ) -> TranscriptionResult:
     selected_backend = backend.lower()
     if selected_backend in {"funasr", "sensevoice"}:
@@ -247,6 +253,9 @@ def transcribe_audio(
             model_size=model_size,
             device=device,
             language=language,
+            use_itn=funasr_use_itn,
+            merge_vad=funasr_merge_vad,
+            merge_length_s=funasr_merge_length_s,
         )
     if selected_backend not in {"whisper", "faster-whisper"}:
         raise ValueError(f"Unsupported ASR backend: {backend}")

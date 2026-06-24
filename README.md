@@ -107,6 +107,12 @@ SenseVoice on the small MInDS-14 zh-CN sample:
 .\scripts\benchmark_sensevoice_minds14.ps1
 ```
 
+SenseVoice parameter sweep:
+
+```powershell
+.\scripts\benchmark_sensevoice_matrix.ps1
+```
+
 Dataset notes and current comparison numbers are in `docs/datasets.md`.
 
 ## CUDA Check

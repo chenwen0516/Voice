@@ -62,9 +62,29 @@ Current 100-sample results on this machine:
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Whisper | `tiny` | CPU int8 | 8% | 42.95% | 28.17% | 0.59s |
 | Whisper | `small` | CPU int8 | 26% | 26.45% | 14.09% | 2.21s |
-| SenseVoice / FunASR | `FunAudioLLM/SenseVoiceSmall` | CPU | 46% | 13.71% | 3.64% | 0.58s |
+| SenseVoice / FunASR | `FunAudioLLM/SenseVoiceSmall` | CPU | 46% | 13.71% | 3.64% | 0.55s |
 
 SenseVoice had the best accuracy in this small local run. Some high-CER rows appear to have loose or truncated reference transcripts, so this is a practical smoke benchmark rather than a clean leaderboard.
+
+## SenseVoice Tuning Notes
+
+The benchmark now reports three useful accuracy views:
+
+- `cer`: strict character error rate after punctuation and whitespace normalization.
+- `clean_cer`: CER after also ignoring common filler words such as `呃` and `嗯`.
+- `contains_reference_rate`: how often the reference transcript appears inside the ASR output, which helps identify rows where the dataset transcript is shorter than the spoken audio.
+
+Current 100-sample SenseVoice parameter sweep:
+
+| Config | Exact | Clean exact | Contains reference | Avg CER | Avg clean CER | Contains-adjusted clean CER |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `zh-itn-vad30` | 46% | 48% | 52% | 13.71% | 13.11% | 8.90% |
+| `zh-itn-vad15` | 46% | 48% | 52% | 13.71% | 13.11% | 8.90% |
+| `zh-itn-novad` | 46% | 48% | 52% | 13.71% | 13.11% | 8.90% |
+| `auto-itn-vad15` | 48% | 50% | 54% | 14.08% | 13.46% | 9.12% |
+| `zh-noitn-vad15` | 47% | 49% | 53% | 14.08% | 13.51% | 9.18% |
+
+Recommendation from this run: keep Chinese language fixed (`zh`) and keep ITN enabled. `vad30` is the default because it matched the best CER group and was slightly faster in this local run.
 
 `scripts/benchmark_manifest.py` accepts a CSV or JSONL manifest with these columns:
 

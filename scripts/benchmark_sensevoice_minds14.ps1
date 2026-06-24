@@ -18,7 +18,11 @@ if (-not (Test-Path $manifest)) {
     --output-dir $outputDir `
     --backend funasr `
     --model-size "FunAudioLLM/SenseVoiceSmall" `
-    --device cpu
+    --device cpu `
+    --language zh `
+    --funasr-use-itn true `
+    --funasr-merge-vad true `
+    --funasr-merge-length-s 30
 
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE

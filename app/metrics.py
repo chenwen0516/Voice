@@ -1,108 +1,30 @@
 from __future__ import annotations
 
 import re
+import unicodedata
+from collections.abc import Callable
+
+SENSEVOICE_TAG_RE = re.compile(r"<\|[^|]+?\|>")
+FILLER_WORDS = ("呃", "嗯", "唔", "呐")
 
 
 def normalize_text(text: str) -> str:
-    text = text.lower()
-    replacements = {
-        "二零二六": "2026",
-        "十秒": "10秒",
-        "臺": "台",
-        "測": "测",
-        "試": "试",
-        "語": "语",
-        "識": "识",
-        "別": "别",
-        "錄": "录",
-        "線": "线",
-        "後": "后",
-        "續": "续",
-        "應": "应",
-        "體": "体",
-        "數": "数",
-        "據": "据",
-        "寫": "写",
-        "檔": "档",
-        "務": "务",
-        "話": "话",
-        "頻": "频",
-        "請": "请",
-        "記": "记",
-        "準": "准",
-        "確": "确",
-        "時": "时",
-        "會": "会",
-        "議": "议",
-        "聲": "声",
-        "關": "关",
-        "錯": "错",
-        "萬": "万",
-        "發": "发",
-        "處": "处",
-        "條": "条",
-        "內": "内",
-        "與": "与",
-        "轉": "转",
-        "離": "离",
-        "經": "经",
-        "這": "这",
-        "個": "个",
-        "樣": "样",
-        "於": "于",
-        "評": "评",
-        "動": "动",
-        "備": "备",
-        "傳": "传",
-        "組": "组",
-        "穩": "稳",
-        "復": "复",
-        "現": "现",
-        "結": "结",
-        "當": "当",
-        "優": "优",
-        "證": "证",
-        "礎": "础",
-        "課": "课",
-        "筆": "笔",
-        "輯": "辑",
-        "驗": "验",
-        "頓": "顿",
-        "網": "网",
-        "絡": "络",
-        "賴": "赖",
-        "匯": "汇",
-        "總": "总",
-        "載": "载",
-        "較": "较",
-        "長": "长",
-        "實": "实",
-        "鍊": "链",
-        "鏈": "链",
-        "煉": "链",
-        "帳": "账",
-        "戶": "户",
-        "餘": "余",
-        "設": "设",
-        "聯": "联",
-        "嗎": "吗",
-        "問": "问",
-        "裡": "里",
-        "靈": "灵",
-        "顯": "显",
-        "開": "开",
-        "幫": "帮",
-        "還": "还",
-        "夠": "够",
-        "麼": "么",
-        "對": "对",
-        "銀": "银",
-        "辦": "办",
-        "查詢": "查询",
-    }
-    for source, target in replacements.items():
-        text = text.replace(source, target)
-    return re.sub(r"[\s,，。.!！？?、:：;；\"“”'‘’（）()《》<>【】\[\]-]", "", text)
+    text = SENSEVOICE_TAG_RE.sub("", text)
+    text = unicodedata.normalize("NFKC", text).lower()
+    chars = []
+    for char in text:
+        category = unicodedata.category(char)
+        if char.isspace() or category[0] in {"P", "S"}:
+            continue
+        chars.append(char)
+    return "".join(chars)
+
+
+def normalize_text_clean(text: str) -> str:
+    normalized = normalize_text(text)
+    for word in FILLER_WORDS:
+        normalized = normalized.replace(word, "")
+    return normalized
 
 
 def edit_distance(left: str, right: str) -> int:
@@ -129,9 +51,20 @@ def edit_distance(left: str, right: str) -> int:
     return previous[-1]
 
 
-def character_error_rate(expected: str, actual: str) -> tuple[float, int, int]:
-    normalized_expected = normalize_text(expected)
-    normalized_actual = normalize_text(actual)
+def character_error_rate(
+    expected: str,
+    actual: str,
+    *,
+    normalizer: Callable[[str], str] = normalize_text,
+) -> tuple[float, int, int]:
+    normalized_expected = normalizer(expected)
+    normalized_actual = normalizer(actual)
     distance = edit_distance(normalized_expected, normalized_actual)
     expected_chars = max(1, len(normalized_expected))
     return distance / expected_chars, distance, expected_chars
+
+
+def contains_reference(expected: str, actual: str) -> bool:
+    normalized_expected = normalize_text_clean(expected)
+    normalized_actual = normalize_text_clean(actual)
+    return bool(normalized_expected) and normalized_expected in normalized_actual
